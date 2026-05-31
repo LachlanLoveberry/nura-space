@@ -1,4 +1,4 @@
-import { defineEventHandler, readBody, createError } from 'h3'
+import { defineEventHandler, readBody, createError, setCookie } from 'h3'
 import { SignupRequest, AuthResponse } from '#/server/schemas'
 import { userStore } from '#/server/db'
 import { hashPassword, createToken } from '#/server/auth'
@@ -19,6 +19,13 @@ export default defineEventHandler(async (event) => {
   const passwordHash = await hashPassword(password)
   const user = await userStore.createUser(email, passwordHash)
   const token = createToken({ sub: user.id, email: user.email })
+  setCookie(event, 'auth_token', token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: 60 * 60 * 24 * 7,
+  })
 
   return AuthResponse.parse({ token, user })
 })

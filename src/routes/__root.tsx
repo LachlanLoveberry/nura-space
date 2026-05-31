@@ -2,11 +2,13 @@ import {
   HeadContent,
   Scripts,
   createRootRouteWithContext,
+  redirect,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
+import { ensureCurrentUser, resolveRouteRedirect } from '#/lib/session'
 
 import appCss from '../styles.css?url'
 
@@ -17,6 +19,14 @@ interface MyRouterContext {
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
+  beforeLoad: async ({ context, location }) => {
+    const currentUser = await ensureCurrentUser(context.queryClient)
+    const redirectTo = resolveRouteRedirect(location.pathname, currentUser)
+
+    if (redirectTo) {
+      throw redirect({ to: redirectTo })
+    }
+  },
   head: () => ({
     meta: [
       {

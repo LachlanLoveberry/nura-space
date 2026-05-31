@@ -1,13 +1,15 @@
-import { createError, getHeader, type H3Event } from 'h3'
+import { createError, getCookie, getHeader, type H3Event } from 'h3'
 import { verifyToken } from './auth'
 
 export type AuthPayload = { userId: string; email: string }
 
 export function requireAuth(event: H3Event): AuthPayload {
   const auth = getHeader(event, 'authorization') ?? ''
-  const token = auth.replace(/^Bearer\s+/i, '')
+  const headerToken = auth.replace(/^Bearer\s+/i, '')
+  const cookieToken = getCookie(event, 'auth_token') ?? ''
+  const token = headerToken || cookieToken
   if (!token) {
-    throw createError({ statusCode: 401, statusMessage: 'Unauthorized', message: 'Missing authorization header' })
+    throw createError({ statusCode: 401, statusMessage: 'Unauthorized', message: 'Missing authorization token' })
   }
 
   const decoded = verifyToken(token)

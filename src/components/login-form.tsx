@@ -1,4 +1,3 @@
-import { cn } from "#/lib/utils.ts"
 import { Button } from "#/components/ui/button.tsx"
 import {
   Card,
@@ -14,6 +13,7 @@ import {
   FieldLabel,
 } from "#/components/ui/field.tsx"
 import { Input } from "#/components/ui/input.tsx"
+import { cn } from "#/lib/utils.ts"
 
 export function LoginForm({
   className,
@@ -43,12 +43,11 @@ export function LoginForm({
               <Field>
                 <div className="flex items-center">
                   <FieldLabel htmlFor="password">Password</FieldLabel>
-                  <a
-                    href="#"
+                  <span
                     className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
                   >
                     Forgot your password?
-                  </a>
+                  </span>
                 </div>
                 <Input id="password" type="password" required />
               </Field>
@@ -58,7 +57,7 @@ export function LoginForm({
                   Login with Google
                 </Button>
                 <FieldDescription className="text-center">
-                  Don&apos;t have an account? <a href="#">Sign up</a>
+                  Don&apos;t have an account? Sign up from the signup page.
                 </FieldDescription>
               </Field>
             </FieldGroup>
