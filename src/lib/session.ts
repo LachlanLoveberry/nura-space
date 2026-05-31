@@ -1,6 +1,7 @@
 import { createMiddleware, createServerFn } from '@tanstack/react-start'
 import { queryOptions } from '@tanstack/react-query'
 import { UserPublic, type UserPublicType } from '#/server/schemas'
+import { queryKeys } from '#/lib/query-keys'
 
 function getAppOrigin() {
   if (typeof window !== 'undefined' && window.location?.origin) {
@@ -71,7 +72,11 @@ export function resolveRouteRedirect(
   user: UserPublicType | null
 ) {
   if (!user) {
-    return pathname === '/signup' ? null : '/signup'
+    if (pathname === '/signup' || pathname === '/login') {
+      return null
+    }
+
+    return '/signup'
   }
 
   if (pathname === '/signup' || pathname === '/login') {
@@ -95,7 +100,7 @@ export function resolveRouteRedirect(
 
 export const currentUserQueryOptions = () =>
   queryOptions({
-    queryKey: ['auth', 'current-user'],
+    queryKey: queryKeys.auth.currentUser,
     queryFn: () => currentUserServerFn(),
     staleTime: 0,
   })
