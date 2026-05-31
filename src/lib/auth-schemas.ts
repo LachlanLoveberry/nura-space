@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { SignupRequest } from '#/server/schemas'
+import { SignupRequest } from '#/lib/contracts'
 
 export const loginFormSchema = z.object({
   email: z.string().email('Please enter a valid email address'),

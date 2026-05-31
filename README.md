@@ -1,6 +1,7 @@
 # Basic Weather App - Nura Space Take Home Test
 I have timeboxed this to 2 hours. I am using Spec-Driven Development assisted by AI. I have written this README top to bottom, and is a record of my thinking and process
 
+
 ## Brief Implications and Inferred Specification
 
 ### Overview
@@ -23,10 +24,20 @@ The brief is intentionally compact, intending to test what I am considering. I h
 ### 3. Live Messages
 - "Implement real-time popups to display messages. Use WebSockets (or an equivalent real-time solution) to deliver these messages"
   - Toasts must appear asynchronously, without refreshing, while the app is in use.
+  - A city-scoped websocket connection now powers the notifications, and the UI renders them with shadcn Sonner.
   
 - "Provide a mechanism to push messages into the system (e.g., an endpoint that accepts a message and a target city)."
   - Messages should be associated with a target city so that notifications can be delivered conditionally.
   - The backend must expose an API endpoint to receive new message payloads. An example curl will be featured below. Requires a secret.
+  - Push notifications with `POST /api/live-messages/push` and the `x-live-message-secret` header.
+  - Websocket clients connect to `/api/live-messages?city=<selected-city>`.
+
+```bash
+curl -X POST http://localhost:3000/api/live-messages/push \
+  -H 'content-type: application/json' \
+  -H 'x-live-message-secret: dev-live-message-secret' \
+  -d '{"city":"Melbourne","title":"Weather alert","message":"Rain expected in the next hour","severity":"warning"}'
+```
 
 ## My implementation approach, intentionally posed as questions
 1. How should the solution behave?
@@ -78,3 +89,50 @@ Will be following SOLID principles pragmatically. Each of the below steps will b
 4. Building UI
     - Pages: Login / sign-up, city selection, home page
     - UI: City Selection, Weather Widgets, Log out button
+
+
+
+## Running locally
+
+**Prerequisites:** Node 22+ and [pnpm](https://pnpm.io/).
+
+```bash
+pnpm install        # install dependencies
+pnpm dev            # start the dev server on http://localhost:3000
+```
+
+The dev server is a [TanStack Start](https://tanstack.com/start) app served by Nitro, with the API handlers under `server/api/` and the UI routes under `src/routes/`. `pnpm dev` loads `.env.local` automatically (via `dotenv-cli`).
+
+Other scripts:
+
+```bash
+pnpm build          # production build
+pnpm start          # run the production build
+pnpm test           # run the Vitest suite
+pnpm check          # Biome lint + format check
+```
+
+### Environment
+
+`.env.local` is committed for convenience with safe development defaults. The variables that affect behaviour:
+
+| Variable | Purpose | Default |
+| --- | --- | --- |
+| `JWT_SECRET` | Signs the `auth_token` JWT set as an httpOnly cookie | `dev_jwt_secret_change_me` |
+| `LIVE_MESSAGE_SECRET` | Shared secret required to push live messages | falls back to `dev-live-message-secret` when unset |
+| `OPEN_METEO_BASE_URL` | Base URL for the Open-Meteo weather + geocoding APIs | `https://api.open-meteo.com` |
+
+> Note: the live-message push endpoint reads `LIVE_MESSAGE_SECRET`. Since it is not set in `.env.local`, the endpoint accepts the fallback `dev-live-message-secret` locally (used in the curl examples below).
+
+### Pushing a live message
+
+Messages are scoped to a city and delivered to any connected client that has selected that city. Clients open a websocket at `ws://localhost:3000/api/live-messages?city=<city>`; pushes require the `x-live-message-secret` header.
+
+```bash
+curl -s -X POST http://localhost:3000/api/live-messages/push \
+  -H 'content-type: application/json' \
+  -H 'x-live-message-secret: dev-live-message-secret' \
+  -d '{"city":"Sydney","title":"Weather alert","message":"Rain expected in the next hour","severity":"warning"}'
+```
+
+`severity` is optional and one of `default | info | success | warning | error`; `title` is optional. With the app open on the matching city, the message appears as a toast in the top-right.

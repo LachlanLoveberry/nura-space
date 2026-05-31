@@ -1,4 +1,5 @@
-import { OpenMeteoForecast, type NormalizedWeatherType } from './schemas'
+import { type NormalizedWeatherType } from '#/lib/contracts'
+import { OpenMeteoForecast } from './schemas'
 import { normalizeWeather } from './normalizer'
 import { defaultHttpClient, requestJson, type HttpClient } from './http-client'
 import { globalCache, type ICache } from './cache'

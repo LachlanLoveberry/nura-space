@@ -1,25 +1,12 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useRouter } from '@tanstack/react-router'
-import { updateSelectedCity, type CityPayload } from '#/lib/api/user'
-import { queryKeys } from '#/lib/query-keys'
-
-function useRefreshSession() {
-  const queryClient = useQueryClient()
-  const router = useRouter()
-
-  return async function refreshSession() {
-    await queryClient.invalidateQueries({
-      queryKey: queryKeys.auth.currentUser,
-    })
-    router.invalidate()
-  }
-}
+import { useMutation } from "@tanstack/react-query";
+import { type CityPayload, updateSelectedCity } from "#/lib/api/user";
+import { useRefreshSession } from "#/lib/state/use-refresh-session";
 
 export function useSelectedCityMutation() {
-  const refreshSession = useRefreshSession()
+	const refreshSession = useRefreshSession();
 
-  return useMutation({
-    mutationFn: (city: CityPayload) => updateSelectedCity(city),
-    onSuccess: refreshSession,
-  })
+	return useMutation({
+		mutationFn: (city: CityPayload) => updateSelectedCity(city),
+		onSuccess: refreshSession,
+	});
 }

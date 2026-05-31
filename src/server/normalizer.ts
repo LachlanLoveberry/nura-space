@@ -1,4 +1,5 @@
-import { NormalizedWeather, type NormalizedWeatherType, type OpenMeteoForecastType } from './schemas'
+import { NormalizedWeather, type NormalizedWeatherType } from '#/lib/contracts'
+import { type OpenMeteoForecastType } from './schemas'
 
 export function normalizeWeather(data: OpenMeteoForecastType): NormalizedWeatherType {
   const current = data.current ?? {}

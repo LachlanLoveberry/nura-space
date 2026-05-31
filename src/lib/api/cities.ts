@@ -1,4 +1,4 @@
-import { GeocodingResponse, type GeocodingResultType } from '#/server/schemas'
+import { GeocodingResponse, type GeocodingResultType } from '#/lib/contracts'
 import { apiGetJson } from '#/lib/api-client'
 
 type CitiesSearchResponse = {

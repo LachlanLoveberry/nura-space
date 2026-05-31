@@ -5,5 +5,5 @@ export default defineEventHandler(async (event) => {
     path: '/',
   })
 
-  return { ok: true }
+  return { ok: true as const }
 })

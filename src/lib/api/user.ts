@@ -1,4 +1,4 @@
-import { UserPublic, type UserPublicType } from '#/server/schemas'
+import { UserPublic, type UserPublicType } from '#/lib/contracts'
 import { apiSendJson } from '#/lib/api-client'
 
 export type CityPayload = {

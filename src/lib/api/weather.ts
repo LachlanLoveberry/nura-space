@@ -1,4 +1,4 @@
-import { NormalizedWeather, type NormalizedWeatherType } from '#/server/schemas'
+import { NormalizedWeather, type NormalizedWeatherType } from '#/lib/contracts'
 import { apiGetJson } from '#/lib/api-client'
 
 export async function getWeather(latitude: number, longitude: number) {

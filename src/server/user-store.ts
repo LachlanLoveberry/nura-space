@@ -1,4 +1,4 @@
-import type { UserPublicType } from './schemas'
+import type { UserPublicType } from '#/lib/contracts'
 
 export type CityPayload = {
   name: string
@@ -15,7 +15,7 @@ export type UserRecord = {
 
 export interface UserStore {
   createUser(email: string, passwordHash: string): Promise<UserPublicType>
-  findUserByEmail(email: string): UserRecord | null
-  findUserById(id: string): UserRecord | null
-  updateUserCity(id: string, city: CityPayload): UserPublicType | null
+  findUserByEmail(email: string): Promise<UserRecord | null>
+  findUserById(id: string): Promise<UserRecord | null>
+  updateUserCity(id: string, city: CityPayload): Promise<UserPublicType | null>
 }

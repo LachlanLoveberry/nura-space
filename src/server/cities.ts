@@ -1,4 +1,4 @@
-import { GeocodingResponse, type GeocodingResultType } from './schemas'
+import { GeocodingResponse, type GeocodingResultType } from '#/lib/contracts'
 import { globalCache, type ICache } from './cache'
 import { defaultHttpClient, requestJson, type HttpClient } from './http-client'
 

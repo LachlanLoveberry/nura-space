@@ -1,112 +1,94 @@
-import { createMiddleware, createServerFn } from '@tanstack/react-start'
-import { queryOptions } from '@tanstack/react-query'
-import { UserPublic, type UserPublicType } from '#/server/schemas'
-import { queryKeys } from '#/lib/query-keys'
+import { queryOptions } from "@tanstack/react-query";
+import { currentUser } from "#/lib/api/auth";
+import { getRequestCookieHeader } from "#/lib/request-cookie.server";
+import { queryKeys } from "#/lib/query-keys";
+import { createDebugLogger } from "#/lib/debug";
+import type { UserPublicType } from "#/lib/contracts";
 
-function getAppOrigin() {
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    return window.location.origin
-  }
+const debugAuth = createDebugLogger("auth");
 
-  if (typeof process !== 'undefined' && process.env.APP_ORIGIN) {
-    return process.env.APP_ORIGIN
-  }
-
-  return 'http://localhost:3000'
-}
-
-function getCookieValue(cookieHeader: string, name: string) {
-  const cookies = cookieHeader.split(';')
-  for (const cookie of cookies) {
-    const [rawKey, ...rawValue] = cookie.trim().split('=')
-    if (rawKey === name) {
-      return rawValue.join('=')
-    }
-  }
-
-  return ''
-}
-
-const authRequestMiddleware = createMiddleware({ type: 'request' }).server(
-  ({ request, next }) => {
-    return next({
-      context: {
-        cookieHeader: request.headers.get('cookie') ?? '',
-      },
-    })
-  }
-)
-
-const currentUserServerFn = createServerFn({ method: 'GET' })
-  .middleware([authRequestMiddleware])
-  .handler(async ({ context }) => {
-    const token = getCookieValue(context.cookieHeader ?? '', 'auth_token')
-    if (!token) {
-      return null
-    }
-
-    const response = await fetch(new URL('/api/auth/me', getAppOrigin()), {
-      headers: {
-        cookie: context.cookieHeader ?? '',
-      },
-    })
-
-    if (response.status === 401) {
-      return null
-    }
-
-    if (!response.ok) {
-      throw new Error('Failed to load the current user')
-    }
-
-    const json = await response.json()
-    return UserPublic.parse(json)
-  })
-
-export function getHomePath(user: Pick<UserPublicType, 'selectedCity'>) {
-  return user.selectedCity ? '/home' : '/select-city'
+export function getHomePath(user: Pick<UserPublicType, "selectedCity">) {
+	return user.selectedCity ? "/home" : "/select-city";
 }
 
 export function resolveRouteRedirect(
-  pathname: string,
-  user: UserPublicType | null
+	pathname: string,
+	user: UserPublicType | null,
 ) {
-  if (!user) {
-    if (pathname === '/signup' || pathname === '/login') {
-      return null
-    }
+	if (pathname.startsWith("/api/")) {
+		return null;
+	}
 
-    return '/signup'
-  }
+	if (!user) {
+		if (pathname === "/signup" || pathname === "/login") {
+			return null;
+		}
 
-  if (pathname === '/signup' || pathname === '/login') {
-    return getHomePath(user)
-  }
+		return "/signup";
+	}
 
-  if (!user.selectedCity && pathname !== '/select-city') {
-    return '/select-city'
-  }
+	if (pathname === "/signup" || pathname === "/login") {
+		return getHomePath(user);
+	}
 
-  if (user.selectedCity && pathname === '/select-city') {
-    return getHomePath(user)
-  }
+	if (!user.selectedCity && pathname !== "/select-city") {
+		return "/select-city";
+	}
 
-  if (pathname === '/') {
-    return getHomePath(user)
-  }
+	if (user.selectedCity && pathname === "/select-city") {
+		return getHomePath(user);
+	}
 
-  return null
+	if (pathname === "/") {
+		const redirectTo = getHomePath(user);
+		debugAuth("redirect-from-root", {
+			pathname,
+			redirectTo,
+			userHasCity: Boolean(user.selectedCity),
+		});
+		return redirectTo;
+	}
+
+	return null;
 }
 
 export const currentUserQueryOptions = () =>
-  queryOptions({
-    queryKey: queryKeys.auth.currentUser,
-    queryFn: () => currentUserServerFn(),
-    staleTime: 0,
-  })
+	queryOptions({
+		queryKey: queryKeys.auth.currentUser,
+		queryFn: async () => {
+			const cookieHeader = typeof window === "undefined" ? getRequestCookieHeader() : null;
+			debugAuth("current-user-request", {
+				runtime: typeof window === "undefined" ? "server" : "client",
+				hasCookieHeader: Boolean(cookieHeader),
+			});
+			const user = await currentUser();
+			debugAuth("current-user-response", {
+				hasUser: Boolean(user),
+				hasCity: Boolean(user?.selectedCity),
+			});
+			return user;
+		},
+		staleTime: Infinity,
+	});
 
 export async function ensureCurrentUser(queryClient: {
-  fetchQuery: (options: ReturnType<typeof currentUserQueryOptions>) => Promise<UserPublicType | null>
+	getQueryData: (
+		queryKey: ReturnType<typeof currentUserQueryOptions>["queryKey"],
+	) => UserPublicType | null | undefined;
+	fetchQuery: (
+		options: ReturnType<typeof currentUserQueryOptions>,
+	) => Promise<UserPublicType | null>;
 }) {
-  return queryClient.fetchQuery(currentUserQueryOptions())
+	const cachedUser = queryClient.getQueryData(
+		currentUserQueryOptions().queryKey,
+	);
+	if (cachedUser) {
+		debugAuth("current-user-cache-hit", {
+			hasCity: Boolean(cachedUser.selectedCity),
+		});
+		return cachedUser;
+	}
+
+	debugAuth("current-user-cache-miss", {});
+	return queryClient.fetchQuery(currentUserQueryOptions());
 }
