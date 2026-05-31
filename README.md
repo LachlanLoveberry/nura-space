@@ -60,10 +60,11 @@ Notifications
 ### How should I implement each feature? What should be delegated/communicated?
 Will be following SOLID principles pragmatically. Each of the below steps will be implemented using AI. I will review their plan and then review and iterate the code.
 
-1. Database + Weather endpoints + cache
+1. Backend Database + Auth + Weather endpoints + cache
     - Weather data mapped to a normalised domain model on the backend, decoupling the frontend from Open-Meteo's response shape and making a future API swap transparent.
     - Database is only used for users table (email, password, selected city)
     - Everything else is only caching, in memory for test, but would use redis in prod.
+    - JWT Authentication + Hashed passwords
 
 2. Data-based router:
     - Configure statement (configure tanstack query client)
